@@ -1,0 +1,63 @@
+---
+ - hosts: instances
+   become: yes
+   gather_facts: no
+   remote_user: ec2-user
+   tasks:
+     - name: adding user
+       user:
+         name: student
+         shell: /bin/bash
+         password: redhat
+         state: present
+     - name: installing packages
+       yum:
+         name:
+            - firewalld
+            - httpd
+            - chrony
+            - words
+            - policycoreutils-python-utils-2.8-16.1.el8.noarch
+         state: present
+     - name: Start services
+       service:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+       loop:
+         - firewalld
+         - httpd
+         - chronyd.service
+     - name: creating file index.html
+       file:
+          name: /var/www/html/index.html
+          state: touch
+     - name: Adding content to index.html
+       copy:
+          content: "Welcome To RHEL!!"
+          dest: /var/www/html/index.html
+     - name: adding service to firewall
+       firewalld:
+         service: http
+         permanent: yes
+         state: enabled
+     - name: Reload service firewalld, in all cases
+       service:
+         name: firewalld
+         state: reloaded
+     - name: Start service httpd, if not started
+       service:
+         name: httpd
+         state: restarted
+         enabled: yes
+     - name: running commands
+       shell: "{{ item }}"
+       loop:
+         - echo "redhat" | passwd --stdin root
+         - sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+         - service sshd reload
+     - name: Ensure the default Apache port is 18989
+       lineinfile:
+            path: /etc/httpd/conf/httpd.conf
+            insertafter: '^#Listen '
+            line: Listen 18989
