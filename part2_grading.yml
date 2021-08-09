@@ -1,0 +1,165 @@
+---
+ - hosts: instances
+   become: yes
+   remote_user: ec2-user
+   ignore_errors: yes
+   tasks:
+     - name: Creating File to store Exam result
+       file:
+         path: /root/Exam_Result.txt
+         state: touch
+     - name: checking repo
+       yum:
+         name: kubelet
+         state: present
+       register: result
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q)  Task done Successful!! Repo Confogured Succssfully.'
+       when: result is succeeded
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q) Task not done!! Repo not configured'
+       when: result is failed
+     - name: cheking lvextend
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q1) Task done Successful!! LV extended successfully'
+       when: ansible_lvm.lvs.vol1.size_g >= "0.26" and ansible_lvm.lvs.vol1.size_g <= "0.33"
+     - name: cheking lvextend
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q1) Task not done!! LV not extended'
+       when: ansible_lvm.lvs.vol1.size_g <= "0.26" or ansible_lvm.lvs.vol1.size_g >= "0.33"
+     - shell: df -hT | grep /common/part
+       register: partn
+     - name: cheking partition
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q2) Task done Successful!! Partition created successfully'
+       when: partn.stdout.find('/common/part') != -1
+     - name: cheking partition
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q2) Task not done!! Partition not created'
+       when: partn.stdout.find('/common/part') == -1
+     - name: cheking swap
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task done Successful!! Swap created successfully'
+       when: ansible_swaptotal_mb >= 180 and ansible_swaptotal_mb <= 220
+     - name: cheking swap
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task not done!! Swap not created'
+       when: ansible_swaptotal_mb <= 180 or ansible_swaptotal_mb >= 220
+     - name: chacking mount point
+       shell: df -hT | grep /common/classes
+       register: lvv
+     - name: checking lvs
+       shell: lvs /dev/database/datastore
+       register: result
+     - name: cheking lv of pe size
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q4) Task done Successfully!! LV created Successfully'
+       when: ansible_lvm.lvs.datastore.size_g >= "0.77" and ansible_lvm.lvs.datastore.size_g <= "0.83" and lvv.stdout.find('/common/classes') != -1 and result is succeeded
+     - name: cheking lv of pe size
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q4) Task not done!! LV not created.'
+       when: lvv.stdout.find('/common/classes') == -1 or result is failed
+     - shell: df -hT | grep /dev/mapper/vgrp
+       register: vdo1
+     - name: cheking vdo
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q5) & Q6)  Task done Successfully!!'
+       when: vdo1.stdout.find('/dev/mapper/vgrp') != -1
+     - name: cheking vdo
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q5) & Q6)  Task not Successfully!!'
+       when: vdo1.stdout.find('/dev/mapper/vgrp') == -1
+     - shell: stratis filesystem list | grep datastore-backup
+       register: str
+     - name: cheking stratis
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q7) Task done Successfully!!'
+       when: str.stdout.find('datastore-backup') != -1 and str is succeeded
+     - name: cheking nfs
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q7) Task not done!!'
+       when: str.stdout.find('datastore-backup') == -1 or str is failed
+     - shell: tuned-adm active
+       register: tune
+     - name: cheking profile
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q8) Task done Successfully!!'
+       when: tune.stdout.find('virtual-guest') != -1
+     - name: cheking profile
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q8) Task not done!!'
+       when: tune.stdout.find('virtual-guest') == -1
+     - name: checking file exists or not
+       stat:
+          path: /var/natasha
+       register: sys
+     - name: checking file exists or not
+       stat:
+          path: /userdata.sh
+       register: sys2
+     - name: checking list in file
+       shell: cat /var/natasha
+       register: sys1
+     - name: cheking natasha
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q9) Task done Successfully!!'
+       when: sys.stat.exists == true and sys1.stdout.find('/var/spool/mail/natasha\n/home/natasha\n/home/natasha/.bash_logout\n/home/natasha/.bash_profile\n/home/natasha/.bashrc') != -1 and sys2.stat.exists == true
+     - name: cheking profile
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q9) Task not done!!'
+       when: sys.stat.exists == false or sys1.stdout.find('/var/spool/mail/natasha\n/home/natasha\n/home/natasha/.bash_logout\n/home/natasha/.bash_profile\n/home/natasha/.bashrc') == -1 or sys2.stat.exists == false
+     - shell: podman ps
+       register: pop
+     - name: checking file exists or not
+       stat:
+          path: /etc/systemd/system/rhsa.service
+       register: sys
+     - name: checking pod
+       shell: grep podman /etc/systemd/system/rhsa.service
+       register: pod
+     - name: checking file exists or not
+       stat:
+          path: /home/student/container_logserver
+       register: sys1
+     - name: cheking podman
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q10) Task done Successfully!!'
+       when: pop.stdout.find('logserver') != -1 and sys.stat.exists == true and pod.stdout.find('podman') != -1 and sys1.stat.exists == true
+     - name: cheking podman
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q10) Task not done!!'
+       when: pop.stdout.find('logserver') == -1 or sys.stat.exists == false or pod.stdout.find('podman') == -1 or sys.stat.exists == false
+     - shell: df -hT | grep 23.23.80.46:/home/guests/ldapuser1
+       register: nfs1
+     - name: cheking nfs
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q11) Task done Successfully!!'
+       when: nfs1.stdout.find('23.23.80.46:/home/guests/ldapuser1') != -1
+     - name: cheking nfs
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q11) Task not done!!'
+       when: nfs1.stdout.find('23.23.80.46:/home/guests/ldapuser1') == -1
