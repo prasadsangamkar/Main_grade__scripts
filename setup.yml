@@ -1,0 +1,70 @@
+---
+ - hosts: instances
+   become: yes
+   remote_user: ec2-user
+   tasks:
+     - name: adding user
+       user:
+         name: "{{ item }}"
+         shell: /bin/bash
+         password: redhat
+         state: present
+       loop:
+         - student
+         - natasha
+     - name: instlling packages
+       yum:
+          name:
+             - podman
+             - vdo
+          state: present
+     - name: service start
+       service:
+          name: "{{ item }}"
+          state: started
+          enabled: yes
+       loop:
+           - podman
+           - vdo
+     - name: running commands
+       shell: "{{ item }}"
+       loop:
+         - echo "redhat" | passwd --stdin root
+         - sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+         - service sshd reload
+         - tuned-adm profile balanced
+     - name: Install lvm2 dependency
+       yum:
+            name: lvm2
+            state: present
+     - name: Create a new primary partition with a size of 1GiB
+       parted:
+            device: /dev/xvdb
+            number: 1
+            state: present
+            part_end: 1GB
+            state: present
+     - name: Create a volume group on top of /dev/sda1 with physical extent size = 32MB
+       lvg:
+            vg: myvg
+            pvs: /dev/xvdb1
+            state: present
+     - name: task for creating logical volume
+       lvol:
+            vg: myvg
+            lv:  vol1
+            size: 110m
+            state: present
+     - filesystem:
+            fstype: xfs
+            dev: /dev/myvg/vol1
+     - name: creating mounting point
+       file:
+            path: /home/data
+            state: directory
+     - name: Mount lv
+       mount:
+            path: /home/data
+            src: /dev/myvg/vol1
+            state: mounted
+            fstype: xfs
