@@ -1,0 +1,66 @@
+ - hosts: localhost
+   become: true
+   vars_files:
+     - cred4.yml
+   tasks:
+ #    - name: creating security group
+ #      ec2_group:
+ #          name: kube
+ #          description: Security grp for web server
+ #          region: us-east-1
+ #         aws_access_key: "{{ aws_access_key_id }}"
+ #          aws_secret_key: "{{ aws_secret_access_key }}"
+ #          security_token: "{{ aws_session_token }}"
+ #         rules:
+ #             - proto: tcp
+ #               from_port: 22
+ #               to_port: 22
+ #               cidr_ip: 0.0.0.0/0
+ #             - proto: tcp
+ #               from_port: 0
+ #               to_port: 65535
+ #               cidr_ip: 0.0.0.0/0
+ #             - proto: udp
+ #               from_port: 0
+ #               to_port: 65535
+ #               cidr_ip: 0.0.0.0/0
+ #          rules_egress:
+ #             - proto: all
+ #               cidr_ip: 0.0.0.0/0
+     - name: launching ec2 instance for webserver
+       ec2:
+          instance_type: t2.micro
+          key_name: kube
+          image: ami-0b0af3577fe5e3532
+          region: us-east-1
+          group: kube
+          count: 5
+          wait: yes
+          vpc_subnet_id: "{{ aws_subnet_id }}"
+          assign_public_ip: yes
+          aws_access_key: "{{ aws_access_key_id }}"
+          aws_secret_key: "{{ aws_secret_access_key }}"
+          security_token: "{{ aws_session_token }}"
+          instance_tags:
+              Name: Machine1
+       register: ec2
+     - name: associate an elastic IP with an instance
+       ec2_eip:
+          device_id: "{{ item.id }}"
+          ip: "{{ item.ip }}"
+          region: us-east-1
+          aws_access_key: "{{ aws_access_key_id }}"
+          aws_secret_key: "{{ aws_secret_access_key }}"
+          security_token: "{{ aws_session_token }}"
+       loop: "{{ ips }}"
+ #    - name: saving instance id
+ #      lineinfile:
+ #         path: /root/Rhcsa/shwetamuley1255@gmail.com
+ #         line: "{{ item }}"
+ #         create: yes
+ #      loop:
+ #          - "{{ ec2.instances[0].id }}"
+ #          - "{{ ec2.instances[1].id }}"
+ #          - "{{ ec2.instances[2].id }}"
+ #          - "{{ ec2.instances[3].id }}"
+ #          - "{{ ec2.instances[4].id }}"
