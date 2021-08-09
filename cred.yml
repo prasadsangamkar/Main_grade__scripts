@@ -1,0 +1,15 @@
+aws_subnet_id: subnet-b21359d4
+aws_access_key_id: ASIAXJOOERYB7JSW7BE6
+aws_secret_access_key: 7fmqWXRRjp2M9eq1dkzDD/z/Yq2eHwHzy/e9ecRZ
+aws_session_token: FwoGZXIvYXdzENL//////////wEaDKAPlPyIxxwNlw+7pSLHAVo3kw3ozKj1ol09nYpYTbTHe/BEYOMjQZdxLvmT3VCEXChD3YKHu542YzpfE/mmFe68zV00w+lf3m9SD6exNO7iznaBKJyVH7CeAP8334/SxYHKr8XqYaVskHvvKb/Lzl+/rrXEendVR991e8eZ6fCmaRMGbW1XUSvIbV2IRzzPZRQTxPPpliReLi3Wh9kRchVLVa78YDaCDNoMKXAR01IU02T/6JtJt52vdFXYbdzNou/06scgjWxMWYC2tudN8DCjniT6/ngoyJSnhwYyLS8Ceh/okWjjBxCTa7odk01/v9IAmEBS19Zj1iTaprHLauOvxKKAR4hE4MnsYw==
+ips:
+  - id: "{{ ec2.instances[0].id }}"
+    ip: 44.194.234.208
+  - id: "{{ ec2.instances[1].id }}"
+    ip: 44.194.242.92
+  - id: "{{ ec2.instances[2].id }}"
+    ip: 107.20.0.112
+  - id: "{{ ec2.instances[3].id }}"
+    ip: 52.22.133.197
+  - id: "{{ ec2.instances[4].id }}"
+    ip: 54.158.248.131
