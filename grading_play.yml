@@ -1,0 +1,203 @@
+---
+ - hosts: instances
+   become: yes
+   remote_user: ec2-user
+   ignore_errors: yes
+   tasks:
+     - name: Creating File to store Exam result
+       file:
+         path: /root/Exam_Result.txt
+         state: touch
+     - name: Checking Hostname
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q1] Task done Successful!! Hostname alpha.domain1.example.com set correctly.'
+       when: ansible_fqdn == "alpha.domain1.example.com"
+     - name: Checking Hostname
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q1] Task not done!! Hostname Not set correctly.'
+       when: ansible_fqdn != "alpha.domain1.example.com"
+     - name: checking repo
+       yum:
+         name: kubelet
+         state: present
+       register: result
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q2)  Task done Successful!! Repo Confogured Succssfully.'
+       when: result is succeeded
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q2) Task not done!!'
+       when: result is failed
+     - name: Checking Group exists or not
+       command: getent group sysadmin
+       register: result
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3)  Task done Successful!! Group sysadmin created Successfully.'
+       when: result is succeeded
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task not done!! Group sysadmin Not Exist.'
+       when: result is failed
+     - name: checking user
+       command: groups natasha
+       register: grp
+     - name: Updating User Status natasha
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task done Successful!! Successfully added user natasha as a member of group sysadmin.'
+       when: grp.stdout.find('natasha') != -1 and grp.stdout.find('sysadmin') != -1
+     - name: Updating User Status natasha
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task not done!! Not added user natasha as a member of group sysadmin.'
+       when: grp.stdout.find('natasha') == -1 or grp.stdout.find('sysadmin') == -1
+     - name: checking user
+       command: groups harry
+       register: grp
+     - name: Updating User Status harry
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task done Successful!! Successfully added user harry as a member of group sysadmin.'
+       when: grp.stdout.find('harry') != -1 and grp.stdout.find('sysadmin') != -1
+     - name: Updating User Status harry
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task not done!! Not added user harry as a member of group sysadmin.'
+       when: grp.stdout.find('harry') == -1 or grp.stdout.find('sysadmin') == -1
+     - name: Checking User exists or not
+       command: grep sarah /etc/passwd
+       register: grp
+     - name: Updating User Status sarah
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task done Successful!! Successfully added user sarah with login shell /sbin/nologin.'
+       when: grp.stdout.find('sarah') != -1 and grp.stdout.find('/sbin/nologin') != -1
+     - name: Updating User Status sarah
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q3) Task not done!! Not added user sarah with login shell/sbin/nologin.'
+       when: grp.stdout.find('sarah') == -1 or grp.stdout.find('/sbin/nologin') == -1
+     - name: checking file exists or not
+       stat:
+          path: /var/liststation1
+       register: sys
+     - name: checking list in file
+       command: cat /var/liststation1
+       register: sys1
+     - name: printing status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q4] Task done Successful!!'
+       when: sys.stat.exists == true and sys1.stdout.find('/var/spool/mail/student\n/home/student\n/home/student/.bash_logout\n/home/student/.bash_profile\n/home/student/.bashrc') != -1
+     - name: Printing Status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q4] Task not done!!'
+       when: sys.stat.exists == false or sys1.stdout.find('/var/spool/mail/student\n/home/student\n/home/student/.bash_logout\n/home/student/.bash_profile\n/home/student/.bashrc') == -1
+     - name: checeking crontab
+       command: crontab -u natasha -l
+       register: cron
+     - name: checking service
+       command: systemctl status crond.service
+       register: result
+     - name: updating status of crontab
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q5] Task done successfully!! Crontab for user natasha set successfully.'
+         create: yes
+       when: result is succeeded and cron.stdout.find('/bin/logger') != -1 and cron.stdout.find('Hello Test') != -1 or cron.stdout.find('/usr/bin/logger') != -1 and cron.stdout.find('Hello Test') != -1
+     - name: updating status of crontab
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q5] Task not done!! Crontab for user natasha not set correctly.'
+         create: yes
+       when: result is failed and cron.stdout.find('/bin/logger') == -1 and cron.stdout.find('/usr/bin/logger') == -1 or cron.stdout.find('Hello Test') == -1
+     - name: checking file exists or not
+       stat:
+         path: /var/tmp/fstab
+       register: per
+     - name:
+       command: getfacl /var/tmp/fstab
+       register: per1
+     - lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q6] Task done successfully!! Permissions set successfully.'
+       when: per.stat.exists == true and per1.stdout.find('user:natasha:rw-\nuser:harry:---') != -1
+     - lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q6] Task not done!! Permissions set are incorrect'
+       when: per.stat.exists == false or per1.stdout.find('user:natasha:rw-\nuser:harry:---') == -1
+     - name: checking ntp
+       command: grep classroom.example.com /etc/chrony.conf
+       register: ntp
+     - name: updating ntp status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q7] Task done successfully!! Successfully configured NTP'
+       when: ntp.stdout.find('classroom.example.com') != -1
+     - name: updating ntp status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q7] Task not done!! Not configured NTP'
+       when: ntp.stdout.find('classroom.example.com') == -1
+     - name: Checking Group exists or not
+       command: grep station1 /etc/passwd
+       register: grp1
+     - name: updating user status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q8] Task done successfully!! User station1 added successfully with shell /sbin/nologin and uid 1088 '
+       when: grp1.stdout.find('station1') != -1 and grp1.stdout.find('/sbin/nologin') != -1 and grp1.stdout.find('1088') != -1
+     - name: updating user status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q8] Task not done!! Not added user station1 with shell /sbin/nologin and uid 1088'
+       when: grp1.stdout.find('station1') == -1 and grp1.stdout.find('/sbin/nologin') or -1 and grp1.stdout.find('1088') == -1
+     - name: checking file exists or not
+       stat:
+         path: /my_backup.tar.gz
+       register: sys
+     - name: updating backup file status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q9] Task done successfully!! Bakup done sucessfully'
+       when: sys.stat.exists == true
+     - name: updatin backup file status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q9] Task not done!! Not Backup files correctly'
+       when: sys.stat.exists == false
+     - name: checking file exists or not
+       stat:
+         path: /root/result.txt
+       register: sys
+     - lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q10] Task done successfully!!'
+       when: sys.stat.exists == true
+     - lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q10] Task not done!!'
+       when: sys.stat.exists == false
+     - name: check
+       uri:
+         url: http://localhost:18989
+       register: result
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q11)  Task done Successful!! Apache server is running on port 18989'
+       when: result is succeeded
+     - name: Updating Group status
+       lineinfile:
+         path: /root/Exam_Result.txt
+         line: 'Q11) Task not done!! Apache server is not running on port 18989'
+       when: result is failed
