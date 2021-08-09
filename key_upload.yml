@@ -1,0 +1,83 @@
+---
+ - hosts: test
+   become: true
+   vars_files:
+      - cred.yml
+   tasks:
+      - name: uploading key on aws
+        ec2_key:
+           name: kube
+           key_material: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDC3ybH8KvgWqnMWWLFHkwLgskxd8GMzN2IGii3nzetTNvjg5eHnP8tuebkNfbgoyWV7Zd/NgnlFMVXLzQy3MXeW1llkEE/m6/5Xl/3irpSBmD8+cJg0NKyqpM+lns64X37CwrHrBDKrktOmwaGWBVjCzwOjk2QPr4KILp7FSBzJ/pp4/lwVPBXjc2ilGuObR3jefNl004ze8/KVSYMAwKmpbpXGetEHkm+p+2x/S01/xnm2v+Lu4YoY4kcqXC0XBenvZiSqa/RtYu9R2TwxMSQHXzJngsYRUKtj2UiLt4tF3J1kdAQzPd24V3RFDob+bNPHBKQyFDs6LdJiPqgNzgL'
+           state: present
+           aws_access_key: "{{ aws_access_key_id }}"
+           aws_secret_key: "{{ aws_secret_access_key }}"
+           security_token: "{{ aws_session_token }}"
+      - name: allocate a new elastic IP and associate it with an instance
+        ec2_eip:
+            state: present
+            region: us-east-1
+            in_vpc: yes
+            release_on_disassociation: yes
+            aws_access_key: "{{ aws_access_key_id }}"
+            aws_secret_key: "{{ aws_secret_access_key }}"
+            security_token: "{{ aws_session_token }}"
+        register: eip1
+      - name: allocate a new elastic IP and associate it with an instance
+        ec2_eip:
+            state: present
+            region: us-east-1
+            in_vpc: yes
+            release_on_disassociation: yes
+            aws_access_key: "{{ aws_access_key_id }}"
+            aws_secret_key: "{{ aws_secret_access_key }}"
+            security_token: "{{ aws_session_token }}"
+        register: eip2
+      - name: allocate a new elastic IP and associate it with an instance
+        ec2_eip:
+            state: present
+            region: us-east-1
+            in_vpc: yes
+            release_on_disassociation: yes
+            aws_access_key: "{{ aws_access_key_id }}"
+            aws_secret_key: "{{ aws_secret_access_key }}"
+            security_token: "{{ aws_session_token }}"
+        register: eip3
+      - name: allocate a new elastic IP and associate it with an instance
+        ec2_eip:
+            state: present
+            region: us-east-1
+            in_vpc: yes
+            release_on_disassociation: yes
+            aws_access_key: "{{ aws_access_key_id }}"
+            aws_secret_key: "{{ aws_secret_access_key }}"
+            security_token: "{{ aws_session_token }}"
+        register: eip4
+      - name: allocate a new elastic IP and associate it with an instance
+        ec2_eip:
+            state: present
+            region: us-east-1
+            in_vpc: yes
+            release_on_disassociation: yes
+            aws_access_key: "{{ aws_access_key_id }}"
+            aws_secret_key: "{{ aws_secret_access_key }}"
+            security_token: "{{ aws_session_token }}"
+        register: eip5
+      - debug:
+            msg: "{{ item }}"
+        loop:
+           - "{{ eip1.public_ip }}"
+           - "{{ eip2.public_ip }}"
+           - "{{ eip3.public_ip }}"
+           - "{{ eip4.public_ip }}"
+           - "{{ eip5.public_ip }}"
+      - name: adding instances to inventory
+        lineinfile:
+            path: /root/Rhcsa/inventory
+            insertafter: '^[instances]'
+            line: "{{ item }}"
+        loop:
+           - "{{ eip1.public_ip }}"
+           - "{{ eip2.public_ip }}"
+           - "{{ eip3.public_ip }}"
+           - "{{ eip4.public_ip }}"
+           - "{{ eip5.public_ip }}"
