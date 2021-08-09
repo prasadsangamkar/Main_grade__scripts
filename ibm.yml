@@ -1,0 +1,35 @@
+ - hosts: localhost
+   become: true
+   vars_files:
+     - cred1.yml
+   tasks:
+     - name: launching ec2 instance for webserver
+       ec2:
+          instance_type: t2.micro
+          key_name: kube
+          image: ami-0b0af3577fe5e3532
+          region: us-east-1
+          group: kube
+          count: 5
+          wait: yes
+          vpc_subnet_id: "{{ aws_subnet_id }}"
+          assign_public_ip: yes
+          volumes:
+           - device_name: /dev/sdb
+             volume_size: 5
+             delete_on_termination: true
+          aws_access_key: "{{ aws_access_key_id }}"
+          aws_secret_key: "{{ aws_secret_access_key }}"
+          security_token: "{{ aws_session_token }}"
+          instance_tags:
+              Name: Machine1
+       register: ec2
+     - name: associate an elastic IP with an instance
+       ec2_eip:
+          device_id: "{{ item.id }}"
+          ip: "{{ item.ip }}"
+          region: us-east-1
+          aws_access_key: "{{ aws_access_key_id }}"
+          aws_secret_key: "{{ aws_secret_access_key }}"
+          security_token: "{{ aws_session_token }}"
+       loop: "{{ ips }}"
